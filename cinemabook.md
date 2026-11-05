@@ -13,38 +13,101 @@ Exception Handling, Lambda Expressions, and Stream API.
  ```
 ```mermaid
 flowchart TD
-    Start([Start]) --> Init[/"Initialize system data<br>(movies, screens, customers,<br>bookings, payments)"/]
-    Init --> DisplayMenu[/"Display Main Menu<br>1. Customer Portal<br>2. Administrator Portal<br>3. Exit"/]
+    Start([Start]) --> Load[/Load Initial Data<br>Movies & Screens/]
+    Load --> MainMenu[/Display Main Menu<br>1. Customer Portal<br>2. Administrator Portal<br>3. Exit/]
     
-    DisplayMenu --> Choice{User choice?}
+    MainMenu --> Choice{User choice?}
     
-    %% Customer Portal Branch
-    Choice -->|1. Customer Portal| PerformCust["Perform selected<br>customer operation<br>(Profile / Movies / Booking /<br>Payment)"]
-    PerformCust --> BookingSel{"Booking<br>selected?"}
-    BookingSel -->|No| ReturnMain1[/"Return to Main Menu"/] --> DisplayMenu
+    %% ================= CUSTOMER PORTAL =================
+    Choice -->|1. Customer Portal| CustPortal[Customer Portal Menu]
     
-    BookingSel -->|Yes| SubBooking[Booking Process]
-    SubBooking --> SelectMovie[/"Select movie / screen / seat"/]
-    SelectMovie --> SeatAvail{"Seat<br>available?"}
+    CustPortal --> CustChoice{Choose Option}
+    CustChoice -->|1. Customer Profile| ProfileMenu[Customer Profile Menu]
+    CustChoice -->|2. Movies| MovieMenu[Customer Movie Menu]
+    CustChoice -->|3. Booking| BookingMenu[Customer Booking Menu]
+    CustChoice -->|4. Payment| PaymentMenu[Customer Payment Menu]
+    CustChoice -->|5. Back| MainMenu
     
-    SeatAvail -->|Yes| ConfirmBook["Confirm booking<br>(generate booking ID)"]
-    SeatAvail -->|No| DisplayUnavail["Display<br>&quot;Seat unavailable&quot;"]
+    %% Profile Menu Sub-flows
+    ProfileMenu --> PC{Option?}
+    PC -->|1. Register| Reg[Customer.registerCustomer<br>Validates Mobile & Email] --> ProfileMenu
+    PC -->|2. Update| Upd[Customer.updateProfile] --> ProfileMenu
+    PC -->|3. View| View[Customer.viewProfile] --> ProfileMenu
+    PC -->|4. Back| CustPortal
     
-    ConfirmBook --> PayDetails[/"Payment details<br>(Booking ID, amount,<br>payment method)"/]
-    DisplayUnavail --> PayDetails
+    %% Movie Menu Sub-flows
+    MovieMenu --> MC{Option?}
+    MC -->|1. View Movies| VM[Movie.displayMovies] --> MovieMenu
+    MC -->|2. Search Movie| SM[SearchService.searchMovie] --> MovieMenu
+    MC -->|3. Back| CustPortal
     
-    PayDetails --> RecordPay["Record payment<br>(generate payment ID)"]
-    RecordPay --> ReturnCust[/"Return to Main Menu"/] --> DisplayMenu
+    %% Booking Menu Sub-flows
+    BookingMenu --> BC{Option?}
+    BC -->|1. Book Ticket| BT[Booking.bookTicket<br>Checks seats & generates Booking ID] --> BookingMenu
+    BC -->|2. View Booking| VB[Booking.viewBooking] --> BookingMenu
+    BC -->|3. Cancel Booking| CB[Booking.cancelBooking] --> BookingMenu
+    BC -->|4. Back| CustPortal
     
-    %% Administrator Portal Branch
-    Choice -->|2. Administrator Portal| ValAdmin[Validate admin password]
-    ValAdmin --> PassValid{"Password<br>valid?"}
+    %% Payment Menu Sub-flows
+    PaymentMenu --> PM{Option?}
+    PM -->|1. Make Payment| MP[Payment.makePayment<br>Card / Net Banking / UPI] --> PaymentMenu
+    PM -->|2. View Payment| VP[Payment.viewPayment] --> PaymentMenu
+    PM -->|3. Back| CustPortal
     
-    PassValid -->|No| ReturnAdmin1[/"Return to Main Menu"/] --> DisplayMenu
-    PassValid -->|Yes| AdminOps["Admin Operations<br>1. Movie Management<br>2. Screen Management<br>3. Customer & Booking<br>4. Reports & Analysis"]
+    %% ================= ADMINISTRATOR PORTAL =================
+    Choice -->|2. Administrator Portal| AdminLogin[Validate Administrator Password<br>'admin123']
+    AdminLogin --> PassCheck{Password Valid?}
     
-    AdminOps --> ReturnAdmin2[/"Return to Main Menu"/] --> DisplayMenu
+    PassCheck -->|No| MainMenu
+    PassCheck -->|Yes| AdminPortal[Administrator Portal Menu]
     
-    %% Exit Branch
-    Choice -->|3. Exit| DisplayThank[/"Display<br>&quot;Thank you&quot;"/] --> Stop([Stop])
+    AdminPortal --> AdminChoice{Choose Option}
+    AdminChoice -->|1. Movie Management| MovieMgmt[Movie Management Menu]
+    AdminChoice -->|2. Screen Management| ScreenMgmt[Screen Management Menu]
+    AdminChoice -->|3. Customer & Booking| CustBookAdmin[Customer & Booking Admin Menu]
+    AdminChoice -->|4. Reports & Analysis| ReportsMenu[Reports & Analysis Menu]
+    AdminChoice -->|5. Logout| MainMenu
+    
+    %% Movie Management Sub-flows
+    MovieMgmt --> MMC{Option?}
+    MMC -->|1. Add Movie| AddM[Movie.addMovie] --> MovieMgmt
+    MMC -->|2. Update Movie| UpdM[Movie.updateMovie] --> MovieMgmt
+    MMC -->|3. View Movies| DispM[Movie.displayMovies] --> MovieMgmt
+    MMC -->|4. Search Movie| SearchM[SearchService.searchMovie] --> MovieMgmt
+    MMC -->|5. Back| AdminPortal
+    
+    %% Screen Management Sub-flows
+    ScreenMgmt --> SMC{Option?}
+    SMC -->|1. Add Screen| AddS[Screen.addScreen] --> ScreenMgmt
+    SMC -->|2. Update Screen| UpdS[Screen.updateScreen] --> ScreenMgmt
+    SMC -->|3. View Screens| DispS[Screen.displayScreens] --> ScreenMgmt
+    SMC -->|4. Check Availability| CheckAvail[Screen.checkAvailability] --> ScreenMgmt
+    SMC -->|5. Back| AdminPortal
+    
+    %% Customer & Booking Admin Sub-flows
+    CustBookAdmin --> CBAC{Option?}
+    CBAC -->|1. Search Customer| SearchC[SearchService.searchCustomer] --> CustBookAdmin
+    CBAC -->|2. Search Booking| SearchB[SearchService.searchBooking] --> CustBookAdmin
+    CBAC -->|3. View All Bookings| ReportB[ReportGenerationService.bookingReport] --> CustBookAdmin
+    CBAC -->|4. Back| AdminPortal
+    
+    %% Reports & Analysis Sub-flows
+    ReportsMenu --> RMC{Option?}
+    RMC -->|1. Movie Report| RepMovie[ReportGenerationService.movieReport] --> ReportsMenu
+    RMC -->|2. Booking Report| RepBook[ReportGenerationService.bookingReport] --> ReportsMenu
+    RMC -->|3. Payment Report| RepPay[ReportGenerationService.paymentReport] --> ReportsMenu
+    RMC -->|4. Occupancy Report| RepOcc[ReportGenerationService.occupancyReport] --> ReportsMenu
+    RMC -->|5. Cinema Analysis| AnalysisMenu[Cinema Analysis Menu] --> ReportsMenu
+    RMC -->|6. Back| AdminPortal
+    
+    %% Cinema Analysis Sub-flows
+    AnalysisMenu --> AMC{Option?}
+    AMC -->|1. Total Revenue| AnRev[AnalysisService.totalRevenue] --> AnalysisMenu
+    AMC -->|2. Most Booked Movie| AnMost[AnalysisService.mostBookedMovie] --> AnalysisMenu
+    AMC -->|3. Occupancy Analysis| AnOcc[AnalysisService.occupancyAnalysis] --> AnalysisMenu
+    AMC -->|4. Overall Summary| AnSum[AnalysisService.overallSummary] --> AnalysisMenu
+    AMC -->|5. Back| ReportsMenu
+    
+    %% ================= EXIT =================
+    Choice -->|3. Exit| Stop([Stop])
 ```
